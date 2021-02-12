@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">		
+	</head>
+	<body>
+        <script src="https://threejs.org/build/three.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="http://stemkoski.github.io/Three.js/js/KeyboardState.js"></script>
+		<script>			
+
+			var camera, scene, renderer;
+			var mesh;
+			var earthPivot, moonPivot; 
+			
+
+			init();
+			animate();
+			
+
+
+			function init() {
+				//Kamera ja kameran sijainti. Myös pivot!
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.z = 700;
+				camera.position.y =200;
+				earthPivot = new THREE.Object3D();
+				
+
+				//Luodaan uusi scene
+				scene = new THREE.Scene();
+
+				//Määritellään tekstuuri jollekin esineelle
+				
+				var skyboxtexture = new THREE.TextureLoader().load('textures/stars.png');
+				var floortexture = new THREE.TextureLoader().load('textures/grass.jpg');
+				var earthtexture = new THREE.TextureLoader().load('textures/earth.jpg');
+				var moontexture = new THREE.TextureLoader().load('textures/moon.jpg');
+				//var suntexture = new THREE.TextureLoader().load('');
+				
+				//Kappaleet, sekä materiaali
+				//planeetat
+				var planet = new THREE.SphereBufferGeometry(100,100,100,100);
+				var earthmaterial = new THREE.MeshLambertMaterial( {map: earthtexture, side: THREE.DoubleSide} );
+				var moonmaterial = new THREE.MeshLambertMaterial( {map: moontexture, side: THREE.DoubleSide} );
+				
+				//skybox
+				var skybox = new THREE.SphereBufferGeometry(1000, 50,50);
+				var skyboxmaterial = new THREE.MeshPhongMaterial( {map:skyboxtexture, side: THREE.DoubleSide} );
+				
+				//Uusi mesh (boxi), joka saa arvot geometry, sekä materiaali. Lisätään sceneen.
+			
+				sky = new THREE.Mesh(skybox, skyboxmaterial);
+				
+
+
+				earth = new THREE.Mesh(planet, earthmaterial);
+				earth.position.x = 600;
+				earth.scale.set(1,1,1);
+				earth.castShadow = true;
+				earth.receiveShadow = true;
+
+				moonPivot = new THREE.Object3D();
+				moon = new THREE.Mesh(planet, moonmaterial);
+				moon.position.x = 400;        // sijainti suhteessa isäobjektiin(earth)
+				moon.scale.set(0.25,0.25,0.25);
+				moon.castShadow = true;
+				moon.receiveShadow = true;
+
+
+				sun = new THREE.Mesh(planet, moonmaterial);
+				sun.position.x = 0;
+				
+			
+				//lisätään sceneen
+				
+				scene.add(sky);
+				scene.add(sun);
+				scene.add(earthPivot);
+				earthPivot.add(earth);
+				earth.add(moonPivot); 
+				moonPivot.add(moon);
+
+
+				//valon määrittely, ja laitetaan valo sceneen.
+				
+
+				//Create a new directional light
+				
+				light = new THREE.PointLight( 0xFFFFFF, 4, 3000 );
+				
+				
+				light.shadow.mapSize.width = 10000;  // default
+				light.shadow.mapSize.height = 1000; // default
+				light.shadow.camera.near = 0.5;       // default
+				light.shadow.camera.far = 10000;
+				light.add( new THREE.Mesh( planet, new THREE.MeshBasicMaterial( { color: 0xFFFFFF } ) ) );
+				scene.add( light );
+						
+
+				var helper = new THREE.CameraHelper( light.shadow.camera );
+				scene.add( helper );
+				
+				//Renderöijän määrittäjä.
+				
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				document.body.appendChild( renderer.domElement );
+
+
+
+		
+
+                //COntrollit
+				controls = new THREE.OrbitControls(camera, renderer.domElement);
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//kameran rotaatio testi
+			
+
+			function animate() {
+
+				renderer.shadowMap.enabled = true;
+				earthPivot.rotation.y += 0.001;
+				moonPivot.rotation.y += 0.002;
+                controls.update();
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
